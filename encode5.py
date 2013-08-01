@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 #reencode script ||v5.8||
+version='v5.9'
 #August-01-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
+#5.9~changed some things so I could make another commit to github lol
 #5.8~added ssa subtitle support (WHO USES THESE???)
 #5.7~added some more stuff to logging
 #5.6~fixed a bug where mp4 encodes were not defaulting to native resolution lol
@@ -14,7 +16,7 @@
 #5.2~added mencoder temp logging
 #5.1~fixed a bug that I cant remember what it was right now
 
-#pass  --logfile --move Completed/    	into the queue txt file. add -tml for avi encodes
+#pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
 
 #TouhouMusicEveryDay
@@ -38,7 +40,7 @@ cRESET='\033[0m'
 
 #-help dialogue in order of precedence
 def helpy():
- return """\033[1;32mThe Duckwad Auto Reencode Script v4
+ return """\033[1;32mThe Duckwad Auto Reencode Script %s
 \033[0;32mArguments:
 \033[0;36m--help, -h, -?:\033[0;32m Displays this dialogue.
 \033[0;36m--check, -c:\033[0;32m Instead of encoding, checks the tracks and gives useful informations.
@@ -50,10 +52,10 @@ def helpy():
 \033[0;36m--resolution, -r [WxH]:\033[0;32m Forces a different resolution. Default for 16:9 is \033[0m704x400\033[0;32m and 4:3 is \033[0m640x480\033[0;32m. The 'x' is required; no spaces.
 \033[0;36m-fps [fps]:\033[0;32m force a different fps. Default is \033[0m23.976 (24000/1001)\033[0;32m.
 \033[0;36m-x [args]:\033[0;32m forces extra ffmpeg arguments. In case of spaces, enclose the arguments in quotations.
-\033[0;36m--move, -m [folder/]: moves the completed encode to [folder/]. Default is current folder; include the trailing forward slash unless you want to rename the file.
+\033[0;36m--move, -m [folder/]:\033[0;32m moves the completed encode to [folder/]. Default is current folder; include the trailing forward slash unless you want to rename the file.
 \033[0;36m--logfile, -l:\033[0;32m generate an encoding log (does not stop encoding).
 \033[0;36m-tl:\033[0;32m generate a temporary log that is deleted after encoding finishes(does not stop encoding).
-\033[0m"""
+\033[0m""" % version
 
 #check for the relevant programs, break if not found
 def checkNecessaryFiles():
@@ -690,4 +692,3 @@ else:
   inqueue=getNextItemInQueue(txtfile)
   if '-tl' in sys.argv:
    call(['rm encodelog.log'],shell=True,stderr=None)
-   #call(['rm *.log'],shell=True,stderr=None)
