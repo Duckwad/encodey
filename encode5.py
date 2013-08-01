@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #reencode script ||v5.8||
-#July-25-2013
+#August-01-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
