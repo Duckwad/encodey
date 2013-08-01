@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<style type="text/css">
+body { 
+font-family:Verdana, Arial, Helvetica, sans-serif;
+font-size:14px;
+}
+
+</style>
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+ <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/trontastic/jquery-ui.css" />
+<link href='http://fonts.googleapis.com/css?family=Expletus+Sans' rel='stylesheet' type='text/css'>
+ <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+  <script type="text/javascript" src="exec.js"></script>
+ <link rel="stylesheet" href="style.css" type="text/css">
+<title>Status</title>
+</head>
+<body>
+<div id="title">Encoder v4/v5</div>
+<br />
+<div id="sidebar-wrapper">
+<div id="sidebar">
+	<div class="sb-header"> Root file list: </div>
+		<div id="filelist" class="widget"></div>
+		<button id="refr-list" class="widget">Refresh</button>
+	<div class="sb-header" id="showcomp"> Completed file list: </div>
+		<div id="completed" class="widget"></div>
+	
+	</div></div>
+
+<h3>Encoding progress:</h3>
+<strong><div id="timeval">NA</div></strong>
+
+<div id="bardivs">
+	<div id="enc-progress" ></div>
+	<div id="progresstext" align="center" ></div>
+</div>
+<h3>Start an encode:</h3>
+<div id="start-enc">
+	<div id="enc-conf"></div>
+	<button id="enc-mp4">Start encode queue</button>
+	</div>
+<div id="dl-box"><h3> Download a file:</h3>
+		<input id="ubox" type="text" class="url" name="urlbox" value="Enter url" size="50" /> <button id="get-info">Get size</button> <button id="start-dl">Start</button> <button id="stop-dlrefresh">Stop refreshing</button>
+		<div id="dl" style="width:33%; color: #02adc7;"></div>
+		<div id="dl-prog" style="width:33%; color:#02adc7;" ></div></div>
+<h3>Queue:</h3>
+<div id="queue"><iframe id="ed-frame" src="editor.php" scrolling="no" style="width: 710px; height: 280px; border:none;"></iframe></div>
+<div id="presets">
+	<span id="newfiles"></span><span id="type"><select id="format"><option value="mp4">MP4</option><option value="avi">AVI</option></select></span><button id="selfile">Add to queue</button><br />
+	<div id="update"></div>
+</div>
+<div id="ed"></div>
+
+</body>
+</html>
