@@ -1,0 +1,137 @@
+#bardivs {
+    width:33%; /* or whatever the of the progress bar is */
+    /* 
+       The position of #bardivs must be something other than
+       static (the default) so that its children will be positioned
+       relative to it.
+    */
+    position:relative;
+}
+
+body {
+	background: #45444d;
+	font-family: 'Expletus Sans', cursive;
+	overflow: auto;
+	height: 100%;
+	padding: 0;
+	margin: 10px;
+	}
+	
+.ui-button .ui-button-text {
+	font-size: 75%;
+	}
+
+#progresstext {
+    position:fixed;
+    top:162px;
+	left: 16.5%;
+	margin: 0px auto;
+	color: #02adc7;
+	font-family: 'Expletus Sans', cursive;
+}
+
+#start-enc {
+	color: #02adc7;
+	}
+	
+#update {
+	color: #02adc7;
+	}
+
+h3 {
+	color: #aecf83;
+	font-family: 'Expletus Sans', cursive;
+	}
+	
+#timeval{
+		color: #02adc7;
+		}
+
+#title{
+	font-family: 'Expletus Sans', cursive;
+	margin: 0px auto;
+	text-align: center;
+	font-size:18pt;
+	color: #aecf83;
+	}
+
+input[type="text"], textarea {
+		background-color: #45444d;
+		border-style: solid;
+		border-color: gray;
+		color: #e3c588;
+		}
+
+#sidebar-wrapper{
+	position: relative;
+	margin-top: -10px;
+	width: 375px;
+	height: 100%;
+	float: right;
+	color: #aecf83;
+	right: 5px;
+	top: 5px;
+	border-style: solid;
+	border-width: 0px 0px 0px 2px;
+	border-color: #65875b;
+	overflow: hidden;
+	}
+		
+#sidebar{
+	color: #aecf83;
+	font-family: 'Expletus Sans', cursive;
+	width: 400px;
+	height: 100% !important;
+	padding: 3px;
+	padding-left: 5px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	
+}
+
+#filelist{
+	font-family: 'Expletus Sans', cursive;
+	width: 90%;
+	}
+
+#completed{
+	overflow-y: scroll;
+	height: 500px;
+	padding-right: 25px !important;
+	}
+	
+#dl-buttons{
+	margin-left: auto;
+	}
+
+
+.widget{
+	position: relative;
+	top: 10px;
+	left: 20px;
+	width: 95%;
+	padding-right: 10px;
+	}
+	
+.sb-header{
+	position: relative;
+	padding: 5px;
+	top: 15px;
+	text-align: center;
+	font-family: 'Expletus Sans', cursive;
+	font-size: 14pt;
+	}
+
+.leftnm{
+	display: inline-block;
+	max-width: 80%;
+	overflow-x: hidden;
+	text-overflow:ellipsis; 
+	white-space: nowrap; 
+	}
+.leftnm:hover {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	color: orangered !important;
+	}
