@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#reencode script ||v5.8||
+#reencode script
 version='v5.9'
 #August-01-2013
 #compatible with localhost web encode frontend
