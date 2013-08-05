@@ -9,6 +9,7 @@ version='v6.0'
 #TO DO:
 #multiprocessing
 #advanced reporting for fronty
+#kill switch for ffmpeg/mencoder/whole queue 
 #uhhhhh clean this up maybe
 #get a better ide (nano stinx)
 
@@ -29,6 +30,8 @@ from time import sleep
 logfname="encodelog.log"
 #progress report log thing name
 reportlog="progress.log"
+#changes the frequency of log reporting (seconds)
+logreportupdate=2
 
 #colors
 cRED='\033[0;31m'
@@ -634,7 +637,9 @@ elif '-i' in sys.argv:
  except:
   pass
 
-#YOLO
+#gets the input queue file or individual video file name from the arguments
+#queue must be a txt file
+#video files must not be a txt file 
 if '--filename' in sys.argv:
  if sys.argv[sys.argv.index('--filename')+1][-3:] == 'txt':
   inqueue=1
@@ -649,7 +654,6 @@ elif '-f' in sys.argv:
   filelist=[sys.argv[sys.argv.index('-f')+1]]
 else:
  filelist=getFileList(inext)
-#SWAG
 
 #yes this one is already in the fileloop function
 if '--oext' in sys.argv:
@@ -681,4 +685,4 @@ else:
    fileloop(Qtop)
   inqueue=getNextItemInQueue(txtfile)
 if '-tl' in sys.argv:
-   call(['rm encodelog.log'],shell=True,stderr=None)
+ call(['rm',logfname])
