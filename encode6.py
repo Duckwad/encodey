@@ -9,18 +9,9 @@ version='v6.0'
 #6.0 PLAN:
 #Add multiprocessing with parsing or something
 #kill switch for ffmpeg/mencoder/whole queue
-#something else maybe but i forgot what
+#make -tl a default setting?
 
-#5.9~changed some things so I could make another commit to github lol
-#5.8~added ssa subtitle support (WHO USES THESE???)
-#5.7~added some more stuff to logging
-#5.6~fixed a bug where mp4 encodes were not defaulting to native resolution lol
-#5.5~fixed a logging bug for mp4 output
-#5.4~changed logging to only one file
-#5.3~5.2 was a lie, for really reals added mencoder temp logging
-#5.2~added mencoder temp logging
-#5.1~fixed a bug that I cant remember what it was right now
-
+#change this soon
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
 
