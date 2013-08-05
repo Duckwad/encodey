@@ -10,6 +10,7 @@ version='v6.0'
 #Add multiprocessing with parsing or something
 #kill switch for ffmpeg/mencoder/whole queue
 #make -tl a default setting?
+#multiprocessing is only going to be for queues for now
 
 #change this soon
 #pass  -tl --move completed/  into the queue file
@@ -23,7 +24,8 @@ from os import listdir, makedirs
 from os.path import isdir, expanduser, isfile
 from shutil import move
 import sys
-from time import sleep
+from time import sleep, time
+import multiprocessing
 
 #colors
 cRED='\033[0;31m'
@@ -33,6 +35,9 @@ cBLUE='\033[0;34m'
 cPURPLE='\033[0;35m'
 cLBLUE='\033[0;36m'
 cRESET='\033[0m'
+
+#changes the frequency of log reporting (seconds)
+logreportupdate=2
 
 #-help dialogue in order of precedence
 def helpy():
@@ -49,7 +54,7 @@ def helpy():
 \033[0;36m-fps [fps]:\033[0;32m force a different fps. Default is \033[0m23.976 (24000/1001)\033[0;32m.
 \033[0;36m-x [args]:\033[0;32m forces extra ffmpeg arguments. In case of spaces, enclose the arguments in quotations.
 \033[0;36m--move, -m [folder/]:\033[0;32m moves the completed encode to [folder/]. Default is current folder; include the trailing forward slash unless you want to rename the file.
-\033[0;36m--logfile, -l:\033[0;32m generate an encoding log (does not stop encoding).
+\033[0;36m--logfile, -l:\033[0;32m generate an encoding log named encodelog.log (does not stop encoding).
 \033[0;36m-tl:\033[0;32m generate a temporary log that is deleted after encoding finishes(does not stop encoding).
 \033[0m""" % version
 
@@ -607,6 +612,12 @@ def getNextItemInQueue(inny):
    fo.write(y)
  return 1
 
+def ProgressReportDaemon():
+ print multiprocessing.current_process().name, '"Okaerinasaimase, goshujin-sama"'
+ while 1:
+  print outty.recv()
+  sleep(logreportupdate)
+
 #########################################
 #  *MAIN*				#
 #	lol				#
@@ -638,7 +649,9 @@ elif '-i' in sys.argv:
  except:
   pass
 
-#YOLO
+#gets the input queue file or individual video file name from the arguments
+#queue must be a txt file
+#video files must not be a txt file
 if '--filename' in sys.argv:
  if sys.argv[sys.argv.index('--filename')+1][-3:] == 'txt':
   inqueue=1
@@ -653,9 +666,9 @@ elif '-f' in sys.argv:
   filelist=[sys.argv[sys.argv.index('-f')+1]]
 else:
  filelist=getFileList(inext)
-#SWAG
 
 #yes this one is already in the fileloop function
+#but it is needed here because i forget
 if '--oext' in sys.argv:
  try:
   outext=sys.argv[sys.argv.index('--oext')+1]
@@ -678,13 +691,24 @@ handleFontPath(fontpath)
 if inqueue==0:
  for fi in filelist:
   fileloop(fi)
-  if '-tl' in sys.argv:
-   call(['rm encodelog.log'],shell=True,stderr=None)
 else:
  while inqueue==1:
   Qtop=getArgvFromFile(txtfile)
+  print Qtop
+  sleep(1)
   if Qtop != '':
-   fileloop(Qtop)
+   #multiprocess stuff goes here
+   #d=daemon process, e=encoding process:the log comes from here
+   eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,))
+   dproc=multiprocessing.Process(name='Reporter', target=ProgressReportDaemon)
+   dproc.daemon = True
+   dproc.start()
+   eproc.start()
+   dproc.join(1)
+   eproc.join()
+   #daemon dies if encoder is done
+   if dproc.is_alive() == True:
+    print "RIP in piece dproc"
   inqueue=getNextItemInQueue(txtfile)
-  if '-tl' in sys.argv:
-   call(['rm encodelog.log'],shell=True,stderr=None)
+if '-tl' in sys.argv:
+ call(['rm','encodelog.log'])
