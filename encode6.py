@@ -6,13 +6,12 @@ version='v6.0'
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
-#6.0 PLAN:
-#Add multiprocessing with parsing or something
-#kill switch for ffmpeg/mencoder/whole queue
-#make -tl a default setting?
-#multiprocessing is only going to be for queues for now
+#TO DO:
+#multiprocessing
+#advanced reporting for fronty
+#uhhhhh clean this up maybe
+#get a better ide (nano stinx)
 
-#change this soon
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
 
@@ -24,8 +23,12 @@ from os import listdir, makedirs
 from os.path import isdir, expanduser, isfile
 from shutil import move
 import sys
-from time import sleep, time
-import multiprocessing
+from time import sleep
+
+#log name
+logfname="encodelog.log"
+#progress report log thing name
+reportlog="progress.log"
 
 #colors
 cRED='\033[0;31m'
@@ -35,9 +38,6 @@ cBLUE='\033[0;34m'
 cPURPLE='\033[0;35m'
 cLBLUE='\033[0;36m'
 cRESET='\033[0m'
-
-#changes the frequency of log reporting (seconds)
-logreportupdate=2
 
 #-help dialogue in order of precedence
 def helpy():
@@ -54,9 +54,9 @@ def helpy():
 \033[0;36m-fps [fps]:\033[0;32m force a different fps. Default is \033[0m23.976 (24000/1001)\033[0;32m.
 \033[0;36m-x [args]:\033[0;32m forces extra ffmpeg arguments. In case of spaces, enclose the arguments in quotations.
 \033[0;36m--move, -m [folder/]:\033[0;32m moves the completed encode to [folder/]. Default is current folder; include the trailing forward slash unless you want to rename the file.
-\033[0;36m--logfile, -l:\033[0;32m generate an encoding log named encodelog.log (does not stop encoding).
-\033[0;36m-tl:\033[0;32m generate a temporary log that is deleted after encoding finishes(does not stop encoding).
-\033[0m""" % version
+\033[0;36m--logfile, -l:\033[0;32m generate an encoding log \033[0m%s\033[0;32m (does not stop encoding).
+\033[0;36m-tl:\033[0;32m generate a temporary log that is deleted after encoding finishes (does not stop encoding).
+\033[0m""" % (version, logfname)
 
 #check for the relevant programs, break if not found
 def checkNecessaryFiles():
@@ -526,8 +526,8 @@ def fileloop(vidfile):
  #checks for log argument
  if '-l' in sys.argv or '--logfile' in sys.argv or '-tl' in sys.argv:
   try:
-   mkvthing.fflog="2> encodelog.log"
-   mkvthing.meextra="1>> encodelog.log"
+   mkvthing.fflog="2> %s" % logfname
+   mkvthing.meextra="1>> %s" % logfname
    logcheck=1
   except:
    logcheck=2
@@ -552,13 +552,7 @@ def fileloop(vidfile):
    print mencoderarg2
    call(mencoderarg2,shell=True)
    if isfile('./passtwo.avi'):
-    if logcheck == 1:
-     call('echo "STARTING REMUX PASS" 1>> encodelog.log',shell=True)
-     #sleep(3)
     call('ffmpeg -i "passtwo.avi" -i "passzero.avi" -map 0:0 -map 1:1 -vcodec copy -acodec copy -f avi -y "%s"' % outfile,shell=True)
-    if logcheck == 1:
-     call('echo "THE ENCODE IS COMPLETE" 1>> encodelog.log',shell=True)
-     sleep(3)
    else:
     print cRED + "mencoder pass(es) (one/two) failed" + cRESET
   else:
@@ -566,9 +560,6 @@ def fileloop(vidfile):
  elif outtye == 'mp4':
   ffmpegarg=buildFFMPEGargmp4(vidfile, mkvthing.vidID, mkvthing.audID, mkvthing.ffvfarg, mkvthing.fffps, mkvthing.vidAR, mkvthing.audFormat, mkvthing.ffres, mkvthing.ffextra,outfile,mkvthing.ffcrf,mkvthing.fflog,rescheck)
   call(ffmpegarg,shell=True)
-  if logcheck == 1:
-   call('echo "THE ENCODE IS COMPLETE" 1>> encodelog.log',shell=True)
-   sleep(3)
  #cleanup
  call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
  if '--move' in sys.argv:
@@ -612,12 +603,6 @@ def getNextItemInQueue(inny):
    fo.write(y)
  return 1
 
-def ProgressReportDaemon():
- print multiprocessing.current_process().name, '"Okaerinasaimase, goshujin-sama"'
- while 1:
-  print outty.recv()
-  sleep(logreportupdate)
-
 #########################################
 #  *MAIN*				#
 #	lol				#
@@ -649,9 +634,7 @@ elif '-i' in sys.argv:
  except:
   pass
 
-#gets the input queue file or individual video file name from the arguments
-#queue must be a txt file
-#video files must not be a txt file
+#YOLO
 if '--filename' in sys.argv:
  if sys.argv[sys.argv.index('--filename')+1][-3:] == 'txt':
   inqueue=1
@@ -666,9 +649,9 @@ elif '-f' in sys.argv:
   filelist=[sys.argv[sys.argv.index('-f')+1]]
 else:
  filelist=getFileList(inext)
+#SWAG
 
 #yes this one is already in the fileloop function
-#but it is needed here because i forget
 if '--oext' in sys.argv:
  try:
   outext=sys.argv[sys.argv.index('--oext')+1]
@@ -694,21 +677,8 @@ if inqueue==0:
 else:
  while inqueue==1:
   Qtop=getArgvFromFile(txtfile)
-  print Qtop
-  sleep(1)
   if Qtop != '':
-   #multiprocess stuff goes here
-   #d=daemon process, e=encoding process:the log comes from here
-   eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,))
-   dproc=multiprocessing.Process(name='Reporter', target=ProgressReportDaemon)
-   dproc.daemon = True
-   dproc.start()
-   eproc.start()
-   dproc.join(1)
-   eproc.join()
-   #daemon dies if encoder is done
-   if dproc.is_alive() == True:
-    print "RIP in piece dproc"
+   fileloop(Qtop)
   inqueue=getNextItemInQueue(txtfile)
 if '-tl' in sys.argv:
- call(['rm','encodelog.log'])
+   call(['rm encodelog.log'],shell=True,stderr=None)
