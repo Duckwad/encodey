@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 #reencode script
-version='v6.0'
-#August-05-2013
+version='PREv6.0'
+#August-06-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
 #TO DO:
-#multiprocessing
 #advanced reporting for fronty
 #kill switch for ffmpeg/mencoder/whole queue 
 #uhhhhh clean this up maybe
@@ -19,12 +18,13 @@ version='v6.0'
 #TouhouMusicEveryDay
 
 #imports
-from subprocess import call, Popen, PIPE, STDOUT
+from subprocess import call, Popen, PIPE, STDOUT, check_output
 from os import listdir, makedirs
 from os.path import isdir, expanduser, isfile
 from shutil import move
 import sys
 from time import sleep
+import multiprocessing
 
 #log name
 logfname="encodelog.log"
@@ -132,6 +132,7 @@ class FileStuff():
  fflog=''
  mebitrate=1000
  meextra=''
+ targetframecount=1.2345678
  #gets the metadata from mediainfo and puts it in the list and cleans it up
  def getMetadata(self, fname):
   templist=[]
@@ -443,7 +444,7 @@ def cleanFileName(fname,exten):
  return fname + '.' + exten
 
 #begin the file handling loop
-def fileloop(vidfile):
+def fileloop(vidfile,*pipey):
 #for fi in filelist:
 
  outtye='avi'
@@ -511,10 +512,19 @@ def fileloop(vidfile):
   except:
    pass
 
- #check for fps override
+ #check for fps override and get total frame count
+ srcfrms=int(check_output('mediainfo --inform="Video;%%Duration%%" "%s"' % vidfile,shell=True)[:-1])
  if '-fps' in sys.argv:
   try:
-   mkvthing.fffps='-r %s ' % sys.argv[sys.argv.index('-fps')+1]
+   overridefps=sys.argv[sys.argv.index('-fps')+1]
+   mkvthing.fffps='-r %s ' % overridefps
+   mkvthing.targetframecount=int((srcfrms/1000.0)*overridefps)+1
+  except:
+   pass
+ else:
+  mkvthing.targetframecount=int((srcfrms/1000.0)*23.976)+1
+  try:
+   pipey.send(["STARTO",mkvthing.targetframecount])
   except:
    pass
 
@@ -541,6 +551,15 @@ def fileloop(vidfile):
   try:
    mkvthing.ffextra=mkvthing.ffextra + sys.argv[sys.argv.index('-x')+1]
   except:
+   pass
+
+  #send the command to start reporting to the reporting daemon if there is a pipe available
+ if pipey:
+  pipey=pipey[0]
+  try:
+   pipey.send(["STARTO",mkvthing.targetframecount])
+  except:
+   #no pipe
    pass
 
  #build the ffmpeg args and stuff
@@ -605,6 +624,16 @@ def getNextItemInQueue(inny):
   for y in x[1:]:
    fo.write(y)
  return 1
+
+#this is the reportey function that runs in a process parallel to fileloop
+def reportDaemon(pipey,maxframes):
+ call(['rm',reportlog])
+ while 1:
+  inny=pipey.recv()
+  if inny == "kill":
+   break 
+  #LOOP EVERY X SECONDS
+  sleep(logreportupdate)
 
 #########################################
 #  *MAIN*				#
@@ -678,11 +707,34 @@ handleFontPath(fontpath)
 if inqueue==0:
  for fi in filelist:
   fileloop(fi)
+  if '-tl' in sys.argv:
+   call(['rm',logfname])
 else:
  while inqueue==1:
   Qtop=getArgvFromFile(txtfile)
   if Qtop != '':
-   fileloop(Qtop)
+   #multiprocessing starts here
+   epipe,rpipe=multiprocessing.Pipe()
+   eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,epipe,))
+   #start the encoding process
+   eproc.start()
+   maxfrms=0
+   absorbacrom=rpipe.recv()
+   #the [REDACTED] function
+   while "STARTO" not in absorbacrom[0]:
+    #waiting for start command from encoder process
+    sleep(1)
+    absorbacrom=rpipe.recv()
+   rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,absorbacrom[1]))
+   rproc.daemon=True
+   rproc.start()
+   #lock to encoder
+   eproc.join(1)
+   sleep(.666)
+   #kill reporter
+   epipe.send("kill")
+   while rproc.is_alive():
+    sleep(.1)
+   if '-tl' in sys.argv:
+    call(['rm',logfname])
   inqueue=getNextItemInQueue(txtfile)
-if '-tl' in sys.argv:
- call(['rm',logfname])
