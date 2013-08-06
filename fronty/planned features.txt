@@ -16,3 +16,4 @@ WIP:
 ***) Not-sucky code and works on reboot :|
 *) Add more encoding preset options (mainly output folder and custom features)
 *) Stop encode
+*) Refresh queue on encode completion
