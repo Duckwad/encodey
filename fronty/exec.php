@@ -145,12 +145,49 @@ elseif($_GET['q']=="start")
 				{
 					flush();
 					echo 'Encode started - probably successful. Don\'t take my word for it though...<br>';
-					flush();
 					$lel = shell_exec('sudo -u encoder python encode5.py -f queue.txt 2>&1'); //yay last time
 					//echo $lel;
+					flush();
 					
 				}
 			else echo "Noap noap noap. Already running. Not starting a new one :<";
+			flush();
+	}
+	
+elseif($_GET['q']=="stop-all")
+	{
+		flush();
+		killall();
+		flush();
+	}
+
+elseif($_GET['q']=="stop-cur")
+	{
+		flush();
+		killall();
+		$file = file($basedir."queue.txt");
+		array_shift($file);
+		
+		$fp = fopen($basedir."queue.txt","w+");
+		for ($x=0; $x < sizeof($file); $x++)
+		{
+			fputs($fp,$file[$x]);
+		}
+		fclose($fp);
+		
+		chdir($basedir);
+		$running = shell_exec('ps aux | grep "[e]ncode5.py"');
+		if (empty($running))
+				{
+					flush();
+					echo 'Encode stopped - continuing from next item in queue<br>';
+					$lel = shell_exec('sudo -u encoder python encode5.py -f queue.txt 2>&1'); //yay last time
+					//echo $lel;
+					flush();
+					
+				}
+			else echo "Noap noap noap. Already running. Not starting a new one :<";
+			flush();
 	}
 
 elseif($_GET['q']=="newfiles")
@@ -179,6 +216,14 @@ elseif($_GET['q']=="newfiles")
 		echo '</select>';
 	}
 
+function killall(){
+		echo "Killing all running encodes, bunnies, and ponies...";
+		shell_exec('sudo -u encoder pkill python');
+		shell_exec('sudo -u encoder pkill ffmpeg');
+		shell_exec('sudo -u encoder pkill mencoder');
+		}
+	
+	
 function hsize($bytes, $decimals = 2) {
 	$size = array('B', 'kB', 'MB', 'GB', 'TB');
 	$factor = floor((strlen($bytes) - 1)/3);
