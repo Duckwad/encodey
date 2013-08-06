@@ -145,7 +145,7 @@ elseif($_GET['q']=="start")
 				{
 					flush();
 					echo 'Encode started - probably successful. Don\'t take my word for it though...<br>';
-					$lel = shell_exec('sudo -u encoder python encode5.py -f queue.txt 2>&1'); //yay last time
+					$lel = shell_exec('sudo -u encoder python encode6.py -f queue.txt 2>&1'); //yay last time
 					//echo $lel;
 					flush();
 					
@@ -176,12 +176,12 @@ elseif($_GET['q']=="stop-cur")
 		fclose($fp);
 		
 		chdir($basedir);
-		$running = shell_exec('ps aux | grep "[e]ncode5.py"');
+		$running = shell_exec('ps aux | grep "[e]ncode6.py"');
 		if (empty($running))
 				{
 					flush();
 					echo 'Encode stopped - continuing from next item in queue<br>';
-					$lel = shell_exec('sudo -u encoder python encode5.py -f queue.txt 2>&1'); //yay last time
+					$lel = shell_exec('sudo -u encoder python encode6.py -f queue.txt 2>&1'); //yay last time
 					//echo $lel;
 					flush();
 					
