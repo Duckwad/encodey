@@ -8,7 +8,7 @@ version='PREv6.0'
 
 #TO DO:
 #advanced reporting for fronty
-#kill switch for ffmpeg/mencoder/whole queue 
+#kill switch for ffmpeg/mencoder/whole queue
 #uhhhhh clean this up maybe
 #get a better ide (nano stinx)
 
@@ -401,7 +401,7 @@ def buildFFMPEGargmp4(fname,vID,aID,vfarg,fps,AR,aformat,res,extra,outty,crf,log
   res='-s 1280x720'
  ffstr='ffmpeg -i "%s" %s %s %s -vcodec libx264 -crf %s %s ' % (fname, vmap, amap, fps, str(crf), res)
  ffstr=ffstr + vfarg
- ffstr=ffstr + '-acodec libfdk_aac -ab 128k -ac 2 -ar 44100 '
+ ffstr=ffstr + '-acodec libfdk_aac -ab 128k -ac 2 -ar 48000 '
  ffstr=ffstr + extra + ' -f mp4 -y "%s" ' % outty + loggy
  return ffstr
 #end ffmpeg build mp4
@@ -523,10 +523,6 @@ def fileloop(vidfile,*pipey):
    pass
  else:
   mkvthing.targetframecount=int((srcfrms/1000.0)*23.976)+1
-  try:
-   pipey.send(["STARTO",mkvthing.targetframecount])
-  except:
-   pass
 
  #check for crf override
  if '-crf' in sys.argv:
@@ -557,21 +553,23 @@ def fileloop(vidfile,*pipey):
  if pipey:
   pipey=pipey[0]
   try:
-   pipey.send(["STARTO",mkvthing.targetframecount])
+   pipey.send([mkvthing.targetframecount,outfile])
   except:
    #no pipe
    pass
 
  #build the ffmpeg args and stuff
  if outtye == 'avi':
+  if pipey:
+   pipey.send(4)
   ffmpegarg=buildFFMPEGarg(vidfile, mkvthing.vidID, mkvthing.audID, mkvthing.ffvfarg, mkvthing.fffps, mkvthing.vidAR, mkvthing.audFormat, mkvthing.ffres, mkvthing.ffextra,outtye,outfile,mkvthing.fflog)
   mencoderarg=buildMencoderarg(1,mkvthing.mebitrate,mkvthing.meextra)
   mencoderarg2=buildMencoderarg(2,mkvthing.mebitrate,mkvthing.meextra)
   call(ffmpegarg,shell=True)
   if isfile('./passzero.avi'):
-   print mencoderarg
+   #print mencoderarg
    call(mencoderarg,shell=True)
-   print mencoderarg2
+   #print mencoderarg2
    call(mencoderarg2,shell=True)
    if isfile('./passtwo.avi'):
     call('ffmpeg -i "passtwo.avi" -i "passzero.avi" -map 0:0 -map 1:1 -vcodec copy -acodec copy -f avi -y "%s"' % outfile,shell=True)
@@ -580,6 +578,8 @@ def fileloop(vidfile,*pipey):
   else:
    print cRED + "FFMPEG pass (zero) failed" + cRESET
  elif outtye == 'mp4':
+  if pipey:
+   pipey.send(1)
   ffmpegarg=buildFFMPEGargmp4(vidfile, mkvthing.vidID, mkvthing.audID, mkvthing.ffvfarg, mkvthing.fffps, mkvthing.vidAR, mkvthing.audFormat, mkvthing.ffres, mkvthing.ffextra,outfile,mkvthing.ffcrf,mkvthing.fflog,rescheck)
   call(ffmpegarg,shell=True)
  #cleanup
@@ -625,15 +625,38 @@ def getNextItemInQueue(inny):
    fo.write(y)
  return 1
 
+#brutally murders the encoding process, ffmpeg, and mencoder
+def KillMeBaby(processy):
+ print cPURPLE + "KILLING ENCODE" + cRESET
+ processy.terminate()
+ call(['pkill','ffmpeg'])
+ call(['pkill','mencoder'])
+ print cRED + "RIP IN PIECE" + cRESET
+
+#writes arg to the progress log file
+def filemebaby(printmebaby):
+ with open(reportlog,"w") as filey:
+  filey.write(printmebaby)
+# filey=open(reportlog,"w")
+# filey.write(printmebaby)
+# filey.close()
+
 #this is the reportey function that runs in a process parallel to fileloop
-def reportDaemon(pipey,maxframes):
+#Pass: x/n   Frame: x/n   Time left: xxm:xxs
+#xx.x%   xxxxxxxxx.out
+#filename|%|pass|frame|time
+def reportDaemon(pipey):
  call(['rm',reportlog])
- while 1:
-  inny=pipey.recv()
-  if inny == "kill":
-   break 
-  #LOOP EVERY X SECONDS
-  sleep(logreportupdate)
+ maxframes,outfname=pipey.recv()
+ passes=pipey.recv()
+ print maxframes
+ print outfname
+ print passes
+ filemebaby("testonetwothree")
+
+ KillMeBaby(eproc)
+ #LOOP EVERY X SECONDS
+ sleep(logreportupdate)
 
 #########################################
 #  *MAIN*				#
@@ -718,14 +741,7 @@ else:
    eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,epipe,))
    #start the encoding process
    eproc.start()
-   maxfrms=0
-   absorbacrom=rpipe.recv()
-   #the [REDACTED] function
-   while "STARTO" not in absorbacrom[0]:
-    #waiting for start command from encoder process
-    sleep(1)
-    absorbacrom=rpipe.recv()
-   rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,absorbacrom[1]))
+   rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,))
    rproc.daemon=True
    rproc.start()
    #lock to encoder
