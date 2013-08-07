@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
 #reencode script
-version='PREv6.0'
+version='6.0'
 #August-07-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
-
-#TO DO:
-#non-fronty encode reporting
-#fix parse errors
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -56,9 +52,7 @@ def helpy():
 \033[0;36m-fps [fps]:\033[0;32m force a different fps. Default is \033[0m23.976 (24000/1001)\033[0;32m.
 \033[0;36m-x [args]:\033[0;32m forces extra ffmpeg arguments. In case of spaces, enclose the arguments in quotations.
 \033[0;36m--move, -m [folder/]:\033[0;32m moves the completed encode to [folder/]. Default is current folder; include the trailing forward slash unless you want to rename the file.
-\033[0;36m--logfile, -l:\033[0;32m generate an encoding log \033[0m%s\033[0;32m (does not stop encoding).
-\033[0;36m-tl:\033[0;32m generate a temporary log that is deleted after encoding finishes (does not stop encoding).
-\033[0m""" % (version, logfname)
+\033[0m""" % (version)
 
 #check for the relevant programs, break if not found
 def checkNecessaryFiles():
@@ -128,10 +122,10 @@ class FileStuff():
  ffcrf=23
  ffvfarg=''
  ffextra=''
- fflog=''
- fflog2=''
+ fflog="2> %s" % logfname
+ meextra=">> %s" % logfname
+ fflog2="2>> %s" %logfname
  mebitrate=1000
- meextra=''
  targetframecount=1.2345678
  #gets the metadata from mediainfo and puts it in the list and cleans it up
  def getMetadata(self, fname):
@@ -529,17 +523,9 @@ def fileloop(vidfile,*pipey):
   except:
    pass
 
- logcheck=0
- #checks for log argument
- if '-l' in sys.argv or '--logfile' in sys.argv or '-tl' in sys.argv:
-  try:
-   mkvthing.fflog="2> %s" % logfname
-   mkvthing.meextra=">> %s" % logfname
-   mkvthing.fflog2="2>> %s" %logfname
-   logcheck=1
-  except:
-   logcheck=2
-   #lol i dunno
+ mkvthing.fflog="2> %s" % logfname
+ mkvthing.meextra=">> %s" % logfname
+ mkvthing.fflog2="2>> %s" %logfname
 
  #check for extra args
  if '-x' in sys.argv:
@@ -665,29 +651,54 @@ def parselog():
 
 #formats time from seconds to mm:ss
 def timeformat(sex):
- minz=sex/60
- sex=sex-minz*60
- if minz < 10:
-  minz='0' + str(minz)
- else:
-  minz=str(minz)
- if sex < 10:
-  sex='0' + str(sex)
- else:
-  sex=str(sex)
- return minz + ":" + sex
+ try:
+  minz=sex/60
+  sex=sex-minz*60
+  if minz < 10:
+   minz='0' + str(minz)
+  else:
+   minz=str(minz)
+  if sex < 10:
+   sex='0' + str(sex)
+  else:
+   sex=str(sex)
+  return minz + "m:" + sex +"s"
+ except:
+  return "ERROR"
 
 def formatparse(currframe,fps,mframes,oname,cpass,mpass):
- currframe=str(currframe)
- fps=str(int(round(float(fps),0)))
- perc=str(round(float(currframe)/float(mframes)*100.0,1)) + "%"
- tleft=(mframes-int(currframe))/int(fps)
+ try:
+  currframe=str(currframe)
+ except:
+  currframe='ERROR'
+ try:
+  fps=str(int(round(float(fps),0)))
+ except:
+  fps='ERROR'
+ try:
+  perc=str(round(float(currframe)/float(mframes)*100.0,1)) + "%"
+ except:
+  perc='ERROR'
+ try:
+  tleft=(mframes-int(currframe))/int(fps)
+ except:
+  tleft='ERROR'
  return oname + '|' + perc + '|' + str(cpass) + '/' + str(mpass) + '|' + fps + '|' + currframe + '/' + str(mframes) + '|' + timeformat(tleft)
 
+def printmebaby(inny):
+ stringy=''
+ reportlist=inny.split('|')
+ stringy='\rPass: ' + reportlist[2] + '   Frame: ' + reportlist[4] + '   FPS: ' + reportlist[3]
+ stringy=stringy + '   Time left: ' + reportlist[5] + '   '
+ stringy=stringy + reportlist[1] + '   ' + reportlist[0]
+ 
+ sys.stdout.write(stringy)
+ sys.stdout.flush()
+
 #this is the reportey function that runs in a process parallel to fileloop
-#Pass: x/n   Frame: x/n   Time left: xxm:xxs
+#Pass: x/n   Frame: x/n   FPS:x   Time left: xxm:xxs
 #xx.x%   xxxxxxxxx.out
-#filename|%|pass|frame|time
+#filename|%|pass|fps|frame|time
 def reportDaemon(pipey):
  currpass=0
  call(['rm',reportlog])
@@ -708,7 +719,7 @@ def reportDaemon(pipey):
     try:
      reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
-     print reporty
+     printmebaby(reporty)
     except:
      filemebaby("Parse error @ %s" % parsey[1])
      print "Parse error @ %s" % parsey[1]
@@ -723,7 +734,7 @@ def reportDaemon(pipey):
     try:
      reporty=formatparse(parsey[2][:-1],parsey[4][:-3],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
-     print reporty
+     printmebaby(reporty)
     except:
      filemebaby("Parse error @ %s" % parsey[2])
      print "Parse error @ %s" % parsey[2]
@@ -737,7 +748,7 @@ def reportDaemon(pipey):
     try:
      reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
-     print reporty
+     printmebaby(reporty)
     except:
      filemebaby("Parse error @ %s" % parsey[1])
      print "Parse error @ %s" % parsey[1]
@@ -756,7 +767,7 @@ def reportDaemon(pipey):
     try:
      reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
-     print reporty
+     printmebaby(reporty)
     except:
      filemebaby("Parse error @ %s" % parsey[1])
      print "Parse error @ %s" % parsey[1]
@@ -765,7 +776,25 @@ def reportDaemon(pipey):
    if pipey.poll():
     currpass=pipey.recv()
  filemebaby("FINISHED %s" % outfname)
- #KillMeBaby(eproc)
+
+def startmproc(srcfile):
+ #multiprocessing starts here
+ epipe,rpipe=multiprocessing.Pipe()
+ eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(srcfile,epipe,))
+ #start the encoding process
+ eproc.start()
+ rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,))
+ rproc.daemon=True
+ rproc.start()
+ #lock to encoder
+ eproc.join()
+ #wait for reporter to die
+ k=0
+ while rproc.is_alive():
+  sleep(.2)
+  k+=1
+  if k>24:
+   rproc.terminate()
 
 #########################################
 #  *MAIN*				#
@@ -838,28 +867,29 @@ handleFontPath(fontpath)
 
 if inqueue==0:
  for fi in filelist:
-  fileloop(fi)
-  if '-tl' in sys.argv:
-   call(['rm',logfname])
+  startmproc(fi)
+  #fileloop(fi)
 else:
  while inqueue==1:
   Qtop=getArgvFromFile(txtfile)
   if Qtop != '':
-   #multiprocessing starts here
-   epipe,rpipe=multiprocessing.Pipe()
-   eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,epipe,))
-   #start the encoding process
-   eproc.start()
-   rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,))
-   rproc.daemon=True
-   rproc.start()
-   #lock to encoder
-   eproc.join()
-   sleep(.666)
-   #kill reporter
-   rproc.terminate()
-   while rproc.is_alive():
-    sleep(.1)
-   if '-tl' in sys.argv:
-    call(['rm',logfname])
+   startmproc(Qtop)
+   #epipe,rpipe=multiprocessing.Pipe()
+   #eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,epipe,))
+   ##start the encoding process
+   #eproc.start()
+   #rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,))
+   #rproc.daemon=True
+   #rproc.start()
+   ##lock to encoder
+   #eproc.join()
+   ##wait for reporter to die
+   #k=0
+   #while rproc.is_alive():
+   # sleep(.2)
+   # k+=1
+   # if k>24:
+   #  rproc.terminate()
+   #call(['rm',logfname,reportlog])
   inqueue=getNextItemInQueue(txtfile)
+call(['rm',logfname,reportlog])
