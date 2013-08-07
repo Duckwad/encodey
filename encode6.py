@@ -7,7 +7,7 @@ version='PREv6.0'
 #sorta like a cock is compatible with an asshole
 
 #TO DO:
-#suppress mvkextract dialogue
+#non-fronty encode reporting
 #fix parse errors
 
 #pass  -tl --move completed/  into the queue file
@@ -18,7 +18,7 @@ version='PREv6.0'
 #imports
 from subprocess import call, Popen, PIPE, STDOUT, check_output
 from os import listdir, makedirs
-from os.path import isdir, expanduser, isfile
+from os.path import isdir, expanduser, isfile, devnull
 from shutil import move
 import sys
 from time import sleep
@@ -306,8 +306,6 @@ class FileStuff():
    tWARN= cBLUE
   elif titlewarn < 100:
    tWARN= cYELLOW
-#  elif titlewarn < 1000:
-#   tWARN= cRED
   else:
    tWARN= cPURPLE
   #put the string together
@@ -354,7 +352,7 @@ def handleFonts(fname,paff):
  for x in xrange(30):
   mkvearg.append(str(x+1))
  
- call(mkvearg)
+ call(mkvearg,stdout=PIPE)
 
  for x in listdir('./'):
   y=x[-3:]
