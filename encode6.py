@@ -2,15 +2,13 @@
 
 #reencode script
 version='PREv6.0'
-#August-06-2013
+#August-07-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
 #TO DO:
-#advanced reporting for fronty
-#kill switch for ffmpeg/mencoder/whole queue
-#uhhhhh clean this up maybe
-#get a better ide (nano stinx)
+#suppress mvkextract dialogue
+#fix parse errors
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -25,13 +23,14 @@ from shutil import move
 import sys
 from time import sleep
 import multiprocessing
+#import traceback
 
 #log name
 logfname="encodelog.log"
 #progress report log thing name
 reportlog="progress.log"
 #changes the frequency of log reporting (seconds)
-logreportupdate=2
+logreportupdate=1
 
 #colors
 cRED='\033[0;31m'
@@ -130,6 +129,7 @@ class FileStuff():
  ffvfarg=''
  ffextra=''
  fflog=''
+ fflog2=''
  mebitrate=1000
  meextra=''
  targetframecount=1.2345678
@@ -536,7 +536,8 @@ def fileloop(vidfile,*pipey):
  if '-l' in sys.argv or '--logfile' in sys.argv or '-tl' in sys.argv:
   try:
    mkvthing.fflog="2> %s" % logfname
-   mkvthing.meextra="1>> %s" % logfname
+   mkvthing.meextra=">> %s" % logfname
+   mkvthing.fflog2="2>> %s" %logfname
    logcheck=1
   except:
    logcheck=2
@@ -565,14 +566,27 @@ def fileloop(vidfile,*pipey):
   ffmpegarg=buildFFMPEGarg(vidfile, mkvthing.vidID, mkvthing.audID, mkvthing.ffvfarg, mkvthing.fffps, mkvthing.vidAR, mkvthing.audFormat, mkvthing.ffres, mkvthing.ffextra,outtye,outfile,mkvthing.fflog)
   mencoderarg=buildMencoderarg(1,mkvthing.mebitrate,mkvthing.meextra)
   mencoderarg2=buildMencoderarg(2,mkvthing.mebitrate,mkvthing.meextra)
+  #send pass 1
+  if pipey:
+   pipey.send(1)
   call(ffmpegarg,shell=True)
   if isfile('./passzero.avi'):
-   #print mencoderarg
+   #send pass 2
+   if pipey:
+    pipey.send(2)
    call(mencoderarg,shell=True)
-   #print mencoderarg2
+   #send pass 3
+   if pipey:
+    pipey.send(3)
    call(mencoderarg2,shell=True)
    if isfile('./passtwo.avi'):
-    call('ffmpeg -i "passtwo.avi" -i "passzero.avi" -map 0:0 -map 1:1 -vcodec copy -acodec copy -f avi -y "%s"' % outfile,shell=True)
+    #send pass 4
+    if pipey:
+     pipey.send(4)
+    call('ffmpeg -i "passtwo.avi" -i "passzero.avi" -map 0:0 -map 1:1 -vcodec copy -acodec copy -f avi -y "%s" %s' % (outfile,mkvthing.fflog2),shell=True)
+    #send pass 5 (finished)
+    if pipey:
+     pipey.send(5)
    else:
     print cRED + "mencoder pass(es) (one/two) failed" + cRESET
   else:
@@ -581,7 +595,13 @@ def fileloop(vidfile,*pipey):
   if pipey:
    pipey.send(1)
   ffmpegarg=buildFFMPEGargmp4(vidfile, mkvthing.vidID, mkvthing.audID, mkvthing.ffvfarg, mkvthing.fffps, mkvthing.vidAR, mkvthing.audFormat, mkvthing.ffres, mkvthing.ffextra,outfile,mkvthing.ffcrf,mkvthing.fflog,rescheck)
+  #send pass 1
+  if pipey:
+   pipey.send(1)
   call(ffmpegarg,shell=True)
+  #send pass 5 (finished)
+  if pipey:
+   pipey.send(5)
  #cleanup
  call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
  if '--move' in sys.argv:
@@ -628,7 +648,10 @@ def getNextItemInQueue(inny):
 #brutally murders the encoding process, ffmpeg, and mencoder
 def KillMeBaby(processy):
  print cPURPLE + "KILLING ENCODE" + cRESET
- processy.terminate()
+ try:
+  processy.terminate()
+ except:
+  print cYELLOW + "Error killing encode process, process already dead or worse" + cRESET
  call(['pkill','ffmpeg'])
  call(['pkill','mencoder'])
  print cRED + "RIP IN PIECE" + cRESET
@@ -637,26 +660,114 @@ def KillMeBaby(processy):
 def filemebaby(printmebaby):
  with open(reportlog,"w") as filey:
   filey.write(printmebaby)
-# filey=open(reportlog,"w")
-# filey.write(printmebaby)
-# filey.close()
+
+#i dunno
+def parselog():
+ return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
+
+#formats time from seconds to mm:ss
+def timeformat(sex):
+ minz=sex/60
+ sex=sex-minz*60
+ if minz < 10:
+  minz='0' + str(minz)
+ else:
+  minz=str(minz)
+ if sex < 10:
+  sex='0' + str(sex)
+ else:
+  sex=str(sex)
+ return minz + ":" + sex
+
+def formatparse(currframe,fps,mframes,oname,cpass,mpass):
+ currframe=str(currframe)
+ fps=str(int(round(float(fps),0)))
+ perc=str(round(float(currframe)/float(mframes)*100.0,1)) + "%"
+ tleft=(mframes-int(currframe))/int(fps)
+ return oname + '|' + perc + '|' + str(cpass) + '/' + str(mpass) + '|' + fps + '|' + currframe + '/' + str(mframes) + '|' + timeformat(tleft)
 
 #this is the reportey function that runs in a process parallel to fileloop
 #Pass: x/n   Frame: x/n   Time left: xxm:xxs
 #xx.x%   xxxxxxxxx.out
 #filename|%|pass|frame|time
 def reportDaemon(pipey):
+ currpass=0
  call(['rm',reportlog])
+ filemebaby("STARTING ENCODE")
  maxframes,outfname=pipey.recv()
  passes=pipey.recv()
- print maxframes
- print outfname
- print passes
- filemebaby("testonetwothree")
 
- KillMeBaby(eproc)
- #LOOP EVERY X SECONDS
- sleep(logreportupdate)
+ ##AVI PASSES
+ if passes == 4:
+  while not pipey.poll():
+   #wait for the pass number to come down the pipe
+   sleep(.25)
+  currpass=pipey.recv()
+  filemebaby("CACHING FONTS")
+  while currpass==1:
+   parsey=parselog()[0:4]
+   if 'frame=' in parsey:
+    try:
+     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
+     filemebaby(reporty)
+     print reporty
+    except:
+     filemebaby("Parse error @ %s" % parsey[1])
+     print "Parse error @ %s" % parsey[1]
+   sleep(logreportupdate)
+   #check to see if encoder is passing the next pass
+   if pipey.poll():
+    currpass=pipey.recv()
+  
+  while currpass==2 or currpass==3:
+   parsey=parselog()[0:5]
+   if 'Pos:' in parsey:
+    try:
+     reporty=formatparse(parsey[2][:-1],parsey[4][:-3],maxframes,outfname,currpass,passes)
+     filemebaby(reporty)
+     print reporty
+    except:
+     filemebaby("Parse error @ %s" % parsey[2])
+     print "Parse error @ %s" % parsey[2]
+   sleep(logreportupdate)
+   if pipey.poll():
+    currpass=pipey.recv()
+ 
+  while currpass==4:
+   parsey=parselog()[0:4]
+   if 'frame=' in parsey:
+    try:
+     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
+     filemebaby(reporty)
+     print reporty
+    except:
+     filemebaby("Parse error @ %s" % parsey[1])
+     print "Parse error @ %s" % parsey[1]
+   sleep(logreportupdate)
+   #check to see if encoder is passing the next pass
+   if pipey.poll():
+    currpass=pipey.recv()
+
+ ##MP4 PASS
+ elif passes == 1:
+  currpass=pipey.recv()
+  sleep(2)
+  while currpass==1:
+   parsey=parseffmpeglog()
+   if 'frame=' in parsey:
+    try:
+     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
+     filemebaby(reporty)
+     print reporty
+    except:
+     filemebaby("Parse error @ %s" % parsey[1])
+     print "Parse error @ %s" % parsey[1]
+   sleep(logreportupdate)
+   #check for pass update
+   if pipey.poll():
+    currpass=pipey.recv()
+ filemebaby("FINISHED %s" % outfname)
+ #KillMeBaby(eproc)
 
 #########################################
 #  *MAIN*				#
@@ -748,10 +859,9 @@ else:
    eproc.join()
    sleep(.666)
    #kill reporter
-   epipe.send("kill")
+   rproc.terminate()
    while rproc.is_alive():
     sleep(.1)
    if '-tl' in sys.argv:
     call(['rm',logfname])
   inqueue=getNextItemInQueue(txtfile)
-
