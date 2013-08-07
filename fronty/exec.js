@@ -39,14 +39,30 @@ $(document).ready(function()
 			});
 	});
 	
-	$("#enc-mp4").click(function()
+	$("#enc-start").click(function()
 	{
-		$("#enc-conf").load('exec.php?q=start&type=mp4');
+		$("#enc-conf").html("Encode probably started. Don't take my word for it though");
+		$("#enc-conf").load('exec.php?q=start');
 	});
 	
-	$("#enc-avi").click(function()
+	$("#stop-all").click(function()
 	{
-		$("#enc-conf").load('exec.php?q=start&type=avi');
+		if(confirm('Really stop all encodes?')){
+			$("#enc-conf").empty();
+			$("#enc-conf").load('exec.php?q=stop-all');
+			}
+	});
+	
+	$("#stop-cur").click(function()
+	{
+		if(confirm('Really stop current encode?')){
+			$("#enc-conf").empty();
+			$("#enc-conf").load('exec.php?q=stop-cur');
+			setTimeout(function() {
+				$("#ed-frame").attr('src', $("#ed-frame").attr('src'));
+				return false;
+				}, 1000);
+			}
 	});
 	
 	$("#refr-list").click(function()
