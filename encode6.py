@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #reencode script
-version='6.2'
+version='6.3'
 #August-08-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
@@ -9,6 +9,9 @@ version='6.2'
 #6.1~fixed reporting bug when frames >9999
 #    changed output formatting
 #6.2~removed some commentented out things
+#6.3~fixed more reporting bugs/optimized log parsing
+#    made -c run faster
+#    optimized (sort of) the reporting process
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -307,7 +310,7 @@ class FileStuff():
   else:
    tWARN= cPURPLE
   #put the string together
-  tWARN+= '##' + fname + '\n'
+  tWARN+= '\n##' + fname
   if len(vido) > 0:
    vido+= '\n'
   if len(audo) > 0:
@@ -585,7 +588,7 @@ def fileloop(vidfile,*pipey):
   if pipey:
    pipey.send(5)
  #cleanup
- call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
+ #call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
  if '--move' in sys.argv:
   try:
    move(outfile,sys.argv[sys.argv.index('--move')+1])
@@ -643,28 +646,31 @@ def filemebaby(printmebaby):
  with open(reportlog,"w") as filey:
   filey.write(printmebaby)
 
+def logpull():
+ return check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1]
+
 #parses the ffmpeg logging
-def parselog():
- #return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
- holdy=check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)
- if 'frame' in holdy:
-  holdy=holdy.split('=')
-  try:
-   holdy[1]=holdy[1][:-3].strip()
-  except:
-   holdy[1]='ERROR'
-  try:
-   holdy[2]=holdy[2][:-1].strip()
-  except:
-   holdy[2]='ERROR'
-  return holdy
- else:
+def parsefflog():
+ try:
+  h=logpull()
+  r=[' ',' ',' ']
+  r[0]=h[:5]
+  r[1]=h[6:h.index('fps=')].strip()
+  r[2]=h[h.index('fps=')+4:h.index('q=')].strip()
+  return r
+ except:
   return [0,0]
 
 #parses the mencoder part of the log
 def parsemenclog():
  try:
-  return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
+  h=logpull()
+  #print h
+  r=[' ',' ',' ']
+  r[0]=h[:4]
+  r[1]=h[h[4:].index('s')+5:h.index('f')].strip()
+  r[2]=h[h.index(')')+1:h.index('fps')].strip()
+  return r
  except:
   return [0,0]
 
@@ -724,79 +730,56 @@ def reportDaemon(pipey):
  filemebaby("STARTING ENCODE")
  maxframes,outfname=pipey.recv()
  passes=pipey.recv()
-
- ##AVI PASSES
- if passes == 4:
-  while not pipey.poll():
-   #wait for the pass number to come down the pipe
-   sleep(.25)
-  currpass=pipey.recv()
-  filemebaby("CACHING FONTS")
-  sys.stdout.write("CACHING FONTS")
-  sys.stdout.flush()
-  while currpass==1:
-   parsey=parselog()
-   if 'frame' in parsey:
-    try:
-     reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
-     filemebaby(reporty)
-     printmebaby(reporty)
-    except:
-     filemebaby("Parse error @ %s" % parsey[1])
-     print "Parse error @ %s" % parsey[1]
-   sleep(logreportupdate)
-   #check to see if encoder is passing the next pass
-   if pipey.poll():
-    currpass=pipey.recv()
-  
-  while currpass==2 or currpass==3:
-   parsey=parsemenclog()[0:5]
-   if 'Pos:' in parsey:
-    try:
-     reporty=formatparse(parsey[2][:-1],parsey[4][:-3],maxframes,outfname,currpass,passes)
-     filemebaby(reporty)
-     printmebaby(reporty)
-    except:
-     filemebaby("Parse error @ %s" % parsey[2])
-     print "Parse error @ %s" % parsey[2]
-   sleep(logreportupdate)
-   if pipey.poll():
-    currpass=pipey.recv()
+ currpass=pipey.recv()
+ filemebaby("CACHING FONTS...")
+ sys.stdout.write("CACHING FONTS...")
+ sys.stdout.flush()
+ while currpass==1:
+  if 'frame' in logpull():
+   try:
+    parsey=parsefflog()
+    reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
+    filemebaby(reporty)
+    printmebaby(reporty)
+   except:
+    filemebaby("Parse error in pass %s" % currpass)
+    print "Parse error in pass %s" % currpass
+  sleep(logreportupdate)
+  #check to see if encoder is passing the next pass
+  if pipey.poll():
+   currpass=pipey.recv()
  
-  while currpass==4:
-   parsey=parselog()
-   if 'frame' in parsey:
-    try:
-     reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
-     filemebaby(reporty)
-     printmebaby(reporty)
-    except:
-     filemebaby("Parse error @ %s" % parsey[1])
-     print "Parse error @ %s" % parsey[1]
-   sleep(logreportupdate)
-   #check to see if encoder is passing the next pass
-   if pipey.poll():
-    currpass=pipey.recv()
+ while currpass==2 or currpass==3:
+  if 'Pos:' in logpull():
+   try:
+    parsey=parsemenclog()
+    reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
+    filemebaby(reporty)
+    printmebaby(reporty)
+   except:
+    filemebaby("Parse error in pass %s" % currpass)
+    print "Parse error in pass %s" % currpass
+  sleep(logreportupdate)
+  #check for next pass
+  if pipey.poll():
+   currpass=pipey.recv()
 
- ##MP4 PASS
- elif passes == 1:
-  currpass=pipey.recv()
-  sleep(2)
-  while currpass==1:
-   parsey=parseffmpeglog()
-   if 'frame=' in parsey:
-    try:
-     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
-     filemebaby(reporty)
-     printmebaby(reporty)
-    except:
-     filemebaby("Parse error @ %s" % parsey[1])
-     print "Parse error @ %s" % parsey[1]
-   sleep(logreportupdate)
-   #check for pass update
-   if pipey.poll():
-    currpass=pipey.recv()
+ while currpass==4:
+  if 'frame' in logpull():
+   try:
+    parsey=parsefflog()
+    reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
+    filemebaby(reporty)
+    printmebaby(reporty)
+   except:
+    filemebaby("Parse error in pass %s" % currpass)
+    print "Parse error in pass %s" % currpass
+  sleep(logreportupdate)
+  #check to see if encoder is passing the next pass
+  if pipey.poll():
+   currpass=pipey.recv()
  filemebaby("FINISHED %s" % outfname)
+ print "FINISHED %s" % outfname
 
 def startmproc(srcfile):
  #multiprocessing starts here
@@ -831,7 +814,6 @@ txtfile=''
 fontpath=expanduser('~/.fonts')
 ffmpegarg=''
 mencoderarg=''
-
 
 if '--help' in sys.argv or '-?' in sys.argv or '-h' in sys.argv:
  exit(helpy())
@@ -886,6 +868,10 @@ if len(filelist) == 0 and inqueue==0:
 
 handleFontPath(fontpath)
 
+if CHECKY==True:
+ for fi in filelist:
+  fileloop(fi)
+ exit()
 if inqueue==0:
  for fi in filelist:
   startmproc(fi)
