@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 
 #reencode script
-version='6.0'
-#August-07-2013
+version='6.1'
+#August-08-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
+
+#6.1~fixed reporting bug when frames >9999
+#    changed output formatting
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -123,7 +126,7 @@ class FileStuff():
  ffvfarg=''
  ffextra=''
  fflog="2> %s" % logfname
- meextra=">> %s" % logfname
+ meextra="1>> %s 2>&1" % logfname
  fflog2="2>> %s" %logfname
  mebitrate=1000
  targetframecount=1.2345678
@@ -523,10 +526,6 @@ def fileloop(vidfile,*pipey):
   except:
    pass
 
- mkvthing.fflog="2> %s" % logfname
- mkvthing.meextra=">> %s" % logfname
- mkvthing.fflog2="2>> %s" %logfname
-
  #check for extra args
  if '-x' in sys.argv:
   try:
@@ -645,9 +644,30 @@ def filemebaby(printmebaby):
  with open(reportlog,"w") as filey:
   filey.write(printmebaby)
 
-#i dunno
+#parses the ffmpeg logging
 def parselog():
- return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
+ #return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
+ holdy=check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)
+ if 'frame' in holdy:
+  holdy=holdy.split('=')
+  try:
+   holdy[1]=holdy[1][:-3].strip()
+  except:
+   holdy[1]='ERROR'
+  try:
+   holdy[2]=holdy[2][:-1].strip()
+  except:
+   holdy[2]='ERROR'
+  return holdy
+ else:
+  return [0,0]
+
+#parses the mencoder part of the log
+def parsemenclog():
+ try:
+  return filter(None,check_output("cat %s | sed -e 's/\\r/\\n/g' | tail -1" % logfname,shell=True)[:-1].split(' '))
+ except:
+  return [0,0]
 
 #formats time from seconds to mm:ss
 def timeformat(sex):
@@ -713,11 +733,13 @@ def reportDaemon(pipey):
    sleep(.25)
   currpass=pipey.recv()
   filemebaby("CACHING FONTS")
+  sys.stdout.write("CACHING FONTS")
+  sys.stdout.flush()
   while currpass==1:
-   parsey=parselog()[0:4]
-   if 'frame=' in parsey:
+   parsey=parselog()
+   if 'frame' in parsey:
     try:
-     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
+     reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
      printmebaby(reporty)
     except:
@@ -729,7 +751,7 @@ def reportDaemon(pipey):
     currpass=pipey.recv()
   
   while currpass==2 or currpass==3:
-   parsey=parselog()[0:5]
+   parsey=parsemenclog()[0:5]
    if 'Pos:' in parsey:
     try:
      reporty=formatparse(parsey[2][:-1],parsey[4][:-3],maxframes,outfname,currpass,passes)
@@ -743,10 +765,10 @@ def reportDaemon(pipey):
     currpass=pipey.recv()
  
   while currpass==4:
-   parsey=parselog()[0:4]
-   if 'frame=' in parsey:
+   parsey=parselog()
+   if 'frame' in parsey:
     try:
-     reporty=formatparse(parsey[1],parsey[3],maxframes,outfname,currpass,passes)
+     reporty=formatparse(parsey[1],parsey[2],maxframes,outfname,currpass,passes)
      filemebaby(reporty)
      printmebaby(reporty)
     except:
