@@ -12,6 +12,7 @@ version='6.3'
 #6.3~fixed more reporting bugs/optimized log parsing
 #    made -c run faster
 #    optimized (sort of) the reporting process
+#6.3.1~uncommented a cleanup line i forgot to do that thing i just said to
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -588,7 +589,7 @@ def fileloop(vidfile,*pipey):
   if pipey:
    pipey.send(5)
  #cleanup
- #call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
+ call(['rm','sobs.ass','sobs.srt','passzero.avi','passtwo.avi','divx2pass.log'],stderr=None)
  if '--move' in sys.argv:
   try:
    move(outfile,sys.argv[sys.argv.index('--move')+1])
