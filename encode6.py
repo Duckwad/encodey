@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 #reencode script
-version='6.1'
+version='6.2'
 #August-08-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
 
 #6.1~fixed reporting bug when frames >9999
 #    changed output formatting
+#6.2~removed some commentented out things
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -370,10 +371,8 @@ def buildFFMPEGarg(fname,vID,aID,vfarg,fps,AR,aformat,res,extra,exten,ofi,loggy)
  amap='-map 0:%d' % (aID-1)
  ffstr='ffmpeg -i "%s" %s %s %s -q 0 ' % (fname, vmap, amap, fps)
  if AR == '16:9':
-#  ffstr=ffstr + '-s 704x400 '
   ffstr=ffstr + res
  elif AR == '4:3':
-#  ffstr=ffstr + '-s 640x480 '
   ffstr=ffstr + res
  else:
   print cYELLOW + "ASPECT RATIO IS FUNKY! USING 16:9!" + cRESET
@@ -890,28 +889,10 @@ handleFontPath(fontpath)
 if inqueue==0:
  for fi in filelist:
   startmproc(fi)
-  #fileloop(fi)
 else:
  while inqueue==1:
   Qtop=getArgvFromFile(txtfile)
   if Qtop != '':
    startmproc(Qtop)
-   #epipe,rpipe=multiprocessing.Pipe()
-   #eproc=multiprocessing.Process(name='Encoder', target=fileloop, args=(Qtop,epipe,))
-   ##start the encoding process
-   #eproc.start()
-   #rproc=multiprocessing.Process(name='Reporter',target=reportDaemon, args=(rpipe,))
-   #rproc.daemon=True
-   #rproc.start()
-   ##lock to encoder
-   #eproc.join()
-   ##wait for reporter to die
-   #k=0
-   #while rproc.is_alive():
-   # sleep(.2)
-   # k+=1
-   # if k>24:
-   #  rproc.terminate()
-   #call(['rm',logfname,reportlog])
   inqueue=getNextItemInQueue(txtfile)
 call(['rm',logfname,reportlog])
