@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #reencode script
-version='6.3'
+version='6.4'
 #August-08-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
@@ -13,6 +13,7 @@ version='6.3'
 #    made -c run faster
 #    optimized (sort of) the reporting process
 #6.3.1~uncommented a cleanup line i forgot to do that thing i just said to
+#6.4~changed the shell output: output filename is now above the progress line
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -715,8 +716,8 @@ def printmebaby(inny):
  stringy=''
  reportlist=inny.split('|')
  stringy='\rPass: ' + reportlist[2] + '   Frame: ' + reportlist[4] + '   FPS: ' + reportlist[3]
- stringy=stringy + '   Time left: ' + reportlist[5] + '   '
- stringy=stringy + reportlist[1] + '   ' + reportlist[0]
+ stringy+='   Time left: ' + reportlist[5] + '   '
+ stringy+=reportlist[1] + '   '
  
  sys.stdout.write(stringy)
  sys.stdout.flush()
@@ -730,6 +731,7 @@ def reportDaemon(pipey):
  call(['rm',reportlog])
  filemebaby("STARTING ENCODE")
  maxframes,outfname=pipey.recv()
+ sys.stdout.write(outfname + '\n')
  passes=pipey.recv()
  currpass=pipey.recv()
  filemebaby("CACHING FONTS...")
