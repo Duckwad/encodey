@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #reencode script
-version='6.4'
+version='6.5'
 #August-08-2013
 #compatible with localhost web encode frontend
 #sorta like a cock is compatible with an asshole
@@ -14,6 +14,7 @@ version='6.4'
 #    optimized (sort of) the reporting process
 #6.3.1~uncommented a cleanup line i forgot to do that thing i just said to
 #6.4~changed the shell output: output filename is now above the progress line
+#6.5~added another | to the end of the progress log for bobhost
 
 #pass  -tl --move completed/  into the queue file
 #call  ./encode5.py --filename queue.txt  	when starting a queue.
@@ -710,7 +711,7 @@ def formatparse(currframe,fps,mframes,oname,cpass,mpass):
   tleft=(mframes-int(currframe))/int(fps)
  except:
   tleft='ERROR'
- return oname + '|' + perc + '|' + str(cpass) + '/' + str(mpass) + '|' + fps + '|' + currframe + '/' + str(mframes) + '|' + timeformat(tleft)
+ return oname + '|' + perc + '|' + str(cpass) + '/' + str(mpass) + '|' + fps + '|' + currframe + '/' + str(mframes) + '|' + timeformat(tleft) + '|'
 
 def printmebaby(inny):
  stringy=''
