@@ -3,7 +3,7 @@ $(document).ready(function()
 	//exec.php is called every second to get current file listing
    var refreshId = setInterval(function() 
    {
-	 $('#timeval').load('exec.php?q=prog');
+	 $('#timeval').load('prog.php');
    }, 1000);
    //stop the update when this button is clicked
    $("#stop").click(function() 

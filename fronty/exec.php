@@ -2,95 +2,12 @@
 
 $basedir = '/home/encoder/encoding/'; //your base directory including the trailing /
 
-if($_GET['q']=="prog")
-	{
-		flush();
-		$type = shell_exec('cat '.$basedir.'encodelog.log | grep "Output #0"'); //checks if encoding type is avi or mp4
-		//echo $type;
-		if (strpos($type,"mp4") !==false)
-			{
-				$type = "mp4";
-				$details = shell_exec('sed -e \'s/\r/\n/g\' '.$basedir.'encodelog.log | grep frame= | tail -n 1'); //assumes mp4 type
-				//echo $type;
-			}
-		elseif (strpos($type,"avi") !==false) {
-				$type = "avi";
-				$pass = shell_exec('cat '.$basedir.'encodelog.log | grep "xvid: 2Pass Rate Control" | tail -n 1');
-				$pass = substr($pass,strpos($pass,"--")+3,1);
-				if (empty($pass))
-				{
-					$details = shell_exec('sed -e \'s/\r/\n/g\' '.$basedir.'encodelog.log | grep frame= | tail -n 1');
-				}
-				else{
-				$details = shell_exec('sed -e \'s/\r/\n/g\' '.$basedir.'encodelog.log | grep Pos: | tail -1'); //assumes avi type otherwise - courtesy of duckwad. because i can't into sed
-				}
-				echo "Encoding ".$type." - pass ";
-			}
-		
-		$slen = 90; //modify for desired log width (90 is good to start)
-		$details = preg_replace('/\s+?(\S+)?$/', '', substr($details, 0, $slen));
-		
-		if (empty($details))
-			{
-			echo "No encode in progress";
-			$bar = "";
-			goto end;
-			}
-		else
-			{
-				if($type=="avi")
-				{
-					//check pass
-					//$pass = shell_exec('cat '.$basedir.'encodelog.log | grep "xvid: 2Pass Rate Control" | tail -n 1');
-					//$pass = substr($pass,strpos($pass,"--")+3,1);
-					//echo $pass;
-				}
-				
-		$total_frames = shell_exec('cat '.$basedir.'encodelog.log | grep "Duration:.*start."');
-		$hours = substr($total_frames,12,2);
-		$mins = substr($total_frames, 15,2);
-		$secs = substr($total_frames, 18,5);
-		
-		$total_frames = (($hours*3600)+($mins*60)+($secs))*23.976;
-		
-		if($type=="avi")
-		{
-			
-			if(empty($pass))
-			{	
-				$fps_loc = strpos($details, "fps");
-				$frame = substr($details,6,$fps_loc - 7);
-				$prog = round(($frame/$total_frames*100),2);
-				echo "0 - ffmpeg subtitle burn-in";
-			}
-			else
-			{
-				$prog = substr($details,strpos($details,"(")+1,2);
-				echo $pass;
-			}
-		}
-		else
-		{
-			$fps_loc = strpos($details, "fps");
-			$frame = substr($details,6,$fps_loc - 7);
-			$prog = round(($frame/$total_frames*100),2);
-		}
-		echo "<pre>$details</pre>";
-		$bar = '$(function() {$("#enc-progress").progressbar({value:'.$prog.'});});';
-		
-		}
-		$details = shell_exec('cat '.$basedir.'*.log | grep "Input #0"'); //same as above - change to match your directory
-		$title = substr($details,strpos($details,"from")+6,-3);
-		echo $prog.'% - '.$title;
-		end:
-	}
-	
-elseif($_GET['q']=="update")
+if($_GET['q']=="update")
 	{
 		$name = $_GET["name"];
 		$type = $_GET["format"];
 		
-		$line = $name."|-tl -o ".$type." -m completed/";
+		$line = $name."|-o ".$type." -m completed/";
 		chdir($basedir);
 		file_put_contents('queue.txt', trim($line).PHP_EOL, FILE_APPEND);
 		
