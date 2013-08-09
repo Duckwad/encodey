@@ -11,8 +11,8 @@ Planned:
 Fixed:
 *) proper xvid support - fixed
 *) Stop encode
+*) Refresh elements on encode completion
 
 WIP:
 ***) Not-sucky code and works on reboot :|
 *) Add more encoding preset options (mainly output folder and custom features)
-*) Refresh queue on encode completion
