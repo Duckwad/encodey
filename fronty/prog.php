@@ -1,7 +1,6 @@
 <?php
 
-	$basedir = '/home/encoder/encoding/'; //your base directory including the trailing "/"
-
+	include 'vars.php';
 	flush();
 	$info = shell_exec('cat '.$basedir.'progress.log'); //reads progress file
 	
