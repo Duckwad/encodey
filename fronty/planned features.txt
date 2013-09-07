@@ -1,5 +1,5 @@
 Planned:
-*) External variables file (basedir, user, comp folder)
+
 **) Fix stupid editor stupid update stupid button... stupid
 *) Add never-cache directive to editor
 *) Screenshot option
@@ -12,7 +12,10 @@ Fixed:
 *) proper xvid support - fixed
 *) Stop encode
 *) Refresh elements on encode completion
+*) DL links
+*) EXTERNAL VARS!!
 
 WIP:
 ***) Not-sucky code and works on reboot :|
 *) Add more encoding preset options (mainly output folder and custom features)
+
