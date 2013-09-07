@@ -1,6 +1,6 @@
 <?php
 
-$basedir = '/home/encoder/encoding/'; //your base directory including the trailing /
+	include 'vars.php';
 
 if($_GET['q']=="update")
 	{
@@ -51,6 +51,25 @@ elseif($_GET['q']=="dircomp")
 	{
 		flush();
 		getfiles($basedir.'completed/'); //and again
+	}
+
+elseif($_GET['q']=="dl")
+	{
+		$file = $basedir.$_GET['file'];
+		if (file_exists($file)) {
+			header('Content-Description: File Transfer');
+			header('Content-Type: application/octet-stream');
+			header('Content-Disposition: attachment; filename='.basename($file));
+			header('Content-Transfer-Encoding: binary');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate');
+			header('Pragma: public');
+			header('Content-Length: ' . filesize($file));
+			ob_clean();
+			flush();
+			readfile($file);
+			exit;
+			}
 	}
 
 elseif($_GET['q']=="start")
@@ -132,6 +151,19 @@ elseif($_GET['q']=="newfiles")
 			}
 		echo '</select>';
 	}
+
+elseif($_GET['q']=="dllist")
+		{
+			flush();
+			$dir = $basedir.'completed/';
+			$files = scan_dir($dir);
+			echo '<select id="dllinks">';
+			foreach($files as $file){
+				echo '<option value="'.$dir.$file.'">'.$file.'</option>';
+				}
+			echo '</select>';	
+				
+		}
 
 function killall(){
 		echo "Killing all running encodes, bunnies, and ponies...";
