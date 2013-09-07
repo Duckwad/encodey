@@ -93,15 +93,15 @@ $(document).ready(function()
 	$("#filelist").load('exec.php?q=dir');
 	$("#completed").load('exec.php?q=dircomp');
 	$("#newfiles").load('exec.php?q=newfiles');
+	$("#dlfiles").load('exec.php?q=dllist');
 	
-		
-	$(".fname").hover(
-    function() {
-        $(this).css("color", "red");
-    },
-    function() {
-        $(this).css("color", "green");
-    });
+	$("#dlnow").click(function()
+	{
+		var file = $('#dllinks').val();
+		alert(file);
+		window.open("download.php?file="+file);
+	});
+	
 	$(function() {
     $( "input[type=submit], a, button" )
       .button()
