@@ -98,7 +98,6 @@ $(document).ready(function()
 	$("#dlnow").click(function()
 	{
 		var file = $('#dllinks').val();
-		alert(file);
 		window.open("download.php?file="+file);
 	});
 	
