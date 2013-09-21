@@ -7,6 +7,7 @@ Planned:
 *) FPS meter thingamabob
 *) mediainfo
 *) DL links
+*) System stats - RAM, CPU, Disk, maybe network
 
 Fixed:
 *) proper xvid support - fixed
@@ -16,6 +17,6 @@ Fixed:
 *) EXTERNAL VARS!!
 
 WIP:
-***) Not-sucky code and works on reboot :|
+***) Not-sucky code
 *) Add more encoding preset options (mainly output folder and custom features)
 
