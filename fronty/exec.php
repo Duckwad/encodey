@@ -81,7 +81,7 @@ elseif($_GET['q']=="start")
 				{
 					flush();
 					echo 'Encode started - probably successful. Don\'t take my word for it though...<br>';
-					$lel = shell_exec('sudo -u encoder python encode6.py -f queue.txt 2>&1'); //yay last time
+					$lel = shell_exec('sudo -u '.$user.' python encode6.py -f queue.txt 2>&1'); //yay last time
 					//echo $lel;
 					flush();
 					
@@ -117,7 +117,7 @@ elseif($_GET['q']=="stop-cur")
 				{
 					flush();
 					echo 'Encode stopped - continuing from next item in queue<br>';
-					$lel = shell_exec('sudo -u encoder python encode6.py -f queue.txt 2>&1'); //yay last time
+					$lel = shell_exec('sudo -u '.$user.' python encode6.py -f queue.txt 2>&1'); //yay last time
 					//echo $lel;
 					flush();
 					
@@ -167,9 +167,9 @@ elseif($_GET['q']=="dllist")
 
 function killall(){
 		echo "Killing all running encodes, bunnies, and ponies...";
-		shell_exec('sudo -u encoder pkill python');
-		shell_exec('sudo -u encoder pkill ffmpeg');
-		shell_exec('sudo -u encoder pkill mencoder');
+		shell_exec('sudo -u '.$user.' pkill python');
+		shell_exec('sudo -u '.$user.' pkill ffmpeg');
+		shell_exec('sudo -u '.$user.' pkill mencoder');
 		}
 	
 	
