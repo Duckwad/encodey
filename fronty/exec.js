@@ -94,7 +94,11 @@ $(document).ready(function()
 	$("#completed").load('exec.php?q=dircomp');
 	$("#newfiles").load('exec.php?q=newfiles');
 	$("#dlfiles").load('exec.php?q=dllist');
-	
+	setInterval(function() 
+   {
+	 $("#sysinfo").load('sysinfo.php');
+   }, 2000);
+		
 	$("#dlnow").click(function()
 	{
 		var file = $('#dllinks').val();
