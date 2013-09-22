@@ -25,6 +25,12 @@ body {
 	font-size: 75%;
 	}
 
+#sysinfo {
+	text-align: center;
+	color: #02adc7;
+	font-family: 'Expletus Sans', cursive;
+	}
+	
 #progresstext {
     position:fixed;
     top:162px;
