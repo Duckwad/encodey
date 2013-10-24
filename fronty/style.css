@@ -31,6 +31,15 @@ body {
 	font-family: 'Expletus Sans', cursive;
 	}
 	
+#delfiles {
+	color: #02adc7;
+	font-family: 'Expletus Sans', cursive;
+	}	
+	
+#dellist {
+	color: red;
+	}
+	
 #progresstext {
     position:fixed;
     top:162px;
