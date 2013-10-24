@@ -6,15 +6,16 @@ Planned:
 *) File management (mainly delete and rename)
 *) FPS meter thingamabob
 *) mediainfo
-*) DL links
-*) System stats - RAM, CPU, Disk, maybe network
+**) Upload/copy completed file to a remote server
 
-Fixed:
+
+Fixed/Added:
 *) proper xvid support - fixed
 *) Stop encode
 *) Refresh elements on encode completion
 *) DL links
 *) EXTERNAL VARS!!
+*) System monitoring
 
 WIP:
 ***) Not-sucky code
