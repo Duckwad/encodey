@@ -1,5 +1,6 @@
 $(document).ready(function()
   {
+	var files = new Array();
 	//exec.php is called every second to get current file listing
    var refreshId = setInterval(function() 
    {
@@ -104,6 +105,45 @@ $(document).ready(function()
 		var file = $('#dllinks').val();
 		window.open("download.php?file="+file);
 	});
+	
+	$("#del").click(function()
+	{
+		var sel = $('#dllinks').val();
+		var pos = sel.indexOf("completed");
+		sel = sel.substring(pos);
+		files.push(sel);
+		if (files.length==1)
+		{
+			$('#dellist').empty();
+		}
+		$('#dellist').append(files[files.length-1]+"<br>");
+	});
+	
+	$("#del1").click(function()
+	{
+		var sel = $('#fnames').val();
+		files.push(sel);
+		if (files.length==1)
+		{
+			$('#dellist').empty();
+		}
+		$('#dellist').append(files[files.length-1]+"<br>");
+	});
+	
+	$("#delnow").click(function()
+	{
+		if(confirm('Really delete these files?')){
+		$.post('delete.php', { 'files':files});
+		$("#filelist").load('exec.php?q=dir');
+		$("#completed").load('exec.php?q=dircomp');
+		$("#newfiles").load('exec.php?q=newfiles');
+		$("#dlfiles").load('exec.php?q=dllist');
+		files.length = 0;
+		$('#dellist').html("Deleted... probably");
+		}
+		
+	});
+
 	
 	$(function() {
     $( "input[type=submit], a, button" )
