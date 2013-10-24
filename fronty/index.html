@@ -51,12 +51,15 @@ font-size:14px;
 <h3>Queue:</h3>
 <div id="queue"><iframe id="ed-frame" src="editor.php" scrolling="no" style="width: 710px; height: 280px; border:none;"></iframe></div>
 <div id="presets">
-	<span id="newfiles"></span><span id="type"><select id="format"><option value="mp4">MP4</option><option value="avi">AVI</option></select></span><button id="selfile">Add to queue</button><br />
+	<span id="newfiles"></span><span id="type"><select id="format"><option value="mp4">MP4</option><option value="avi">AVI</option></select></span><button id="selfile">Add to queue</button><button id="del1">Mark for deletion</button><br />
 	<div id="update"></div>
 </div>
-<h3>Download:</h3>
+<h3>File Management:</h3>
 <div id="dl">
-	<span id="dlfiles"></span><button id="dlnow">Download to local</button>
+	<span id="dlfiles"></span><button id="dlnow">Download to local</button><button id="del">Mark for deletion</button><br>
+	<br><div id="delfiles">Marked for deletion:</div>
+	<div id="dellist">Nothing picked for deletion</div>
+	<br><button id="delnow">Delete nao</button>
 <div id="ed"></div>
 
 </body>
