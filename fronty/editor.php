@@ -1,7 +1,7 @@
 
 <?php
-
-$fn = "/home/encoder/encoding/queue.txt";
+include 'vars.php';
+$fn = $basedir."queue.txt";
 if (isset($_POST['content']))
 {
     $content = stripslashes($_POST['content']);
