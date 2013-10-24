@@ -22,7 +22,7 @@ elseif($_GET['q']=="wget")
 		
 		if($_GET["dl"]=="true")
 			{
-				$url = 'wget -o '.$basedir.'logfile -P '.$basedir.' "'.$_GET["url"].'" &';
+				$url = 'sudo -u '.$user.' wget -o '.$basedir.'logfile -P '.$basedir.' "'.$_GET["url"].'" &';
 				//same as above - change to match where you want the files to be downloaded. "logfile" is the wget log, -P is the dl directory
 				shell_exec($url);
 			}
